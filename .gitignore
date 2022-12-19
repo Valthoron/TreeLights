@@ -122,3 +122,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Project-specific
+capture/*
+!capture/.gitkeep
+processed/*
+!processed/.gitkeep
+*.zip
+.vscode/
+.DS_Store
