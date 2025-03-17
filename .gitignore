@@ -131,3 +131,5 @@ processed/*
 *.zip
 .vscode/
 .DS_Store
+
+data.csv
