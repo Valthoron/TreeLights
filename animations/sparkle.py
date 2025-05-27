@@ -1,13 +1,13 @@
 import random
 
 import numpy as np
-import scipy as sp
 
 from animation import Animation
-from tools import tools
 
 
 class Sparkle(Animation):
+    new_flares = 0.0
+
     def initialize(self):
         self.new_flares = 0.0
 
@@ -16,7 +16,7 @@ class Sparkle(Animation):
         self.new_flares += 60 * delta_time
 
         # Decay
-        for i, lamp in enumerate(self.lamps):
+        for i, _ in enumerate(self.lamps):
             pr, pg, pb = self.pixels[i]
             r = int(0.9 * pr)
             g = int(0.9 * pg)

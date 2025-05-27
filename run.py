@@ -1,7 +1,7 @@
-import random
 import csv
 import importlib.util
 import os
+import random
 import sys
 import time
 
@@ -11,15 +11,24 @@ import numpy as np
 
 from animation import Animation
 
+
 def files_in(path):
     for name in os.listdir(path):
         if os.path.isfile(os.path.join(path, name)):
             yield name
 
-def load_animation(name: str) -> Animation:
+
+def load_animation(name: str) -> Animation | None:
     full_name = f"animations.{name}"
     resolved_name = importlib.util.resolve_name(full_name, None)
     spec = importlib.util.find_spec(resolved_name)
+
+    if spec is None:
+        return None
+
+    if spec.loader is None:
+        return None
+
     lib = importlib.util.module_from_spec(spec)
     sys.modules[resolved_name] = lib
     spec.loader.exec_module(lib)
@@ -27,104 +36,115 @@ def load_animation(name: str) -> Animation:
     instantiate = getattr(lib, 'instantiate')
     return instantiate()
 
-print("Hello.")
 
-# Initialize neopixel object
-pixels = neopixel.NeoPixel(board.D12, 498, auto_write=False, pixel_order=neopixel.RGB)
-print("Pixels initialized.")
+def main():
+    print("Hello.")
 
-# Read lamp coordinates
-data_file_name = "data.csv"
-lamps = []
-lamps_polar = []
+    # Initialize neopixel object
+    pixels = neopixel.NeoPixel(board.D12, 498, auto_write=False, pixel_order=neopixel.RGB)
+    print("Pixels initialized.")
 
-with open(data_file_name, "r", newline="") as file_handle:
-    reader = csv.reader(file_handle)
-    for row in reader:
-        x = float(row[0])
-        y = float(row[1])
-        z = float(row[2])
-        t = np.arctan2(y, x)
-        r = np.sqrt(x**2 + y**2)
-        lamps.append((x, y, z))
-        lamps_polar.append((t, r, z))
+    # Read lamp coordinates
+    data_file_name = "data.csv"
+    lamps = []
+    lamps_polar = []
 
-lamps = np.array(lamps)
-lamps_polar = np.array(lamps_polar)
-print("Lamp coordinates loaded.")
+    with open(data_file_name, "r", newline="", encoding="utf-8") as file_handle:
+        reader = csv.reader(file_handle)
+        for row in reader:
+            x = float(row[0])
+            y = float(row[1])
+            z = float(row[2])
+            t = np.arctan2(y, x)
+            r = np.sqrt(x**2 + y**2)
+            lamps.append((x, y, z))
+            lamps_polar.append((t, r, z))
 
-# Load all animations in ./animations
-animations = {}
+    lamps = np.array(lamps)
+    lamps_polar = np.array(lamps_polar)
+    print("Lamp coordinates loaded.")
 
-for file_name in files_in("animations"):
-    if not file_name.endswith(".py"):
-        continue
+    # Load all animations in ./animations
+    animations: dict[str, Animation] = {}
 
-    name = file_name.replace(".py", "")
+    for file_name in files_in("animations"):
+        if not file_name.endswith(".py"):
+            continue
 
-    animation = load_animation(name)
-    animation.num_lamps = len(lamps)
-    animation.lamps = lamps
-    animation.lamps_polar = lamps_polar
-    animation.pixels = pixels
-    animation.initialize()
+        animation_name = file_name.replace(".py", "")
 
-    animations[name] = animation
-    print(f">\t{name}")
+        animation = load_animation(animation_name)
 
-print(f"{len(animations.keys())} animation(s) loaded.")
+        if animation is None:
+            continue
 
-# Animation loop
-animation_list = [
-    "barberPole",
-    "bonfire",
-    "colorPlane",
-    "matrix",
-    "sparkle",
-    "wanderingSphere",
-    "shuffle"
-]
+        animation.num_lamps = len(lamps)
+        animation.lamps = lamps
+        animation.lamps_polar = lamps_polar
+        animation.pixels = pixels
+        animation.initialize()
 
-do_animation_loop = False
+        animations[animation_name] = animation
+        print(f">\t{animation_name}")
 
-# Load specified animation
-if not len(sys.argv) > 1:
-    do_animation_loop = True
-    animation_name = ""
-    print(f"Running preselected animations...")
-else:
-    animation_name = sys.argv[1]
+    print(f"{len(animations.keys())} animation(s) loaded.")
 
-    if animation_name not in animations:
-        print(f"Animation named \"{animation_name}\" not found.")
-        exit()
+    # Animation loop
+    animation_list = [
+        "barberPole",
+        "bonfire",
+        "colorPlane",
+        "matrix",
+        "sparkle",
+        "wanderingSphere",
+        "shuffle"
+    ]
 
-    animation = animations[animation_name]
-    print(f"Running animation \"{animation_name}\"...")
+    do_animation_loop = False
 
-# Animate
-t_start = time.time()
-t = 0.0
-t_prev = 0.0
-t_next_animation = 0.0
+    # Load specified animation
+    if not len(sys.argv) > 1:
+        do_animation_loop = True
+        animation_name = ""
+        print("Running preselected animations...")
+    else:
+        animation_name = sys.argv[1]
 
-while True:
-    try:
-        t_prev = t
-        t = time.time() - t_start
-        dt = t - t_prev
+        if animation_name not in animations:
+            print(f"Animation named \"{animation_name}\" not found.")
+            exit()
 
-        if do_animation_loop:
-            if t > t_next_animation:
-                t_next_animation = t + 60.0
-                choice_set = set(animation_list).difference(set([animation_name]))
-                animation_name = random.choice(list(choice_set))
-                animation = animations[animation_name]
+        animation = animations[animation_name]
+        print(f"Running animation \"{animation_name}\"...")
 
-        animation.update(t, dt)
+    # Animate
+    animation: Animation
+    t_start = time.time()
+    t = 0.0
+    t_prev = 0.0
+    t_next_animation = 0.0
 
-        pixels.show()
+    while True:
+        try:
+            t_prev = t
+            t = time.time() - t_start
+            dt = t - t_prev
 
-    except KeyboardInterrupt:
-        print("Goodbye.")
-        exit()
+            if do_animation_loop:
+                if t > t_next_animation:
+                    t_next_animation = t + 60.0
+                    choice_set = set(animation_list).difference(set([animation_name]))
+                    animation_name = random.choice(list(choice_set))
+                    animation = animations[animation_name]
+
+            animation.update(t, dt)
+
+            pixels.show()
+
+        except KeyboardInterrupt:
+            print("Goodbye.")
+            exit()
+
+
+if __name__ == "__main__":
+    main()

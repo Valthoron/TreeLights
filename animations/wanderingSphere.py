@@ -1,7 +1,6 @@
 import random
 
 import numpy as np
-import scipy as sp
 
 from animation import Animation
 from tools import tools
@@ -12,6 +11,9 @@ SPEED = 0.2
 
 
 class WanderingSphere(Animation):
+    positions: np.typing.NDArray
+    targets: np.typing.NDArray
+
     def initialize(self):
         self.positions = np.tile(np.array([0.0, 0.0, 0.0]), (NUM_SPHERES, 1))
         self.targets = np.tile(np.array([0.0, 0.0, 0.0]), (NUM_SPHERES, 1))
@@ -31,7 +33,7 @@ class WanderingSphere(Animation):
         all_distances_g = np.sum(np.subtract(self.lamps, self.positions[1])**2, axis=-1)**0.5
         all_distances_b = np.sum(np.subtract(self.lamps, self.positions[2])**2, axis=-1)**0.5
 
-        for i, lamp in enumerate(self.lamps):
+        for i, _ in enumerate(self.lamps):
             r = 50 * (tools.saturate(1.0 - (all_distances_r[i] / 0.2), 0.0, 1.0))
             g = 50 * (tools.saturate(1.0 - (all_distances_g[i] / 0.2), 0.0, 1.0))
             b = 50 * (tools.saturate(1.0 - (all_distances_b[i] / 0.2), 0.0, 1.0))

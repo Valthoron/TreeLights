@@ -1,18 +1,31 @@
 import random
 
 import numpy as np
-import scipy as sp
 
 from animation import Animation
-from tools import tools
 
 
 class Bonfire(Animation):
+    lamps_polar_sorted: list
+    next_randomize: float
+    new_flares: float
+    c0: float
+    c1: float
+    c2: float
+    c3: float
+    c0_t: float
+    c1_t: float
+    c2_t: float
+    c3_t: float
+
     def initialize(self):
         lamps_polar = np.copy(self.lamps_polar)
         indices = np.reshape(np.array(range(0, self.num_lamps)), (self.num_lamps, 1))
         lamps_polar = np.concatenate((lamps_polar, indices), axis=1)
         self.lamps_polar_sorted = sorted(lamps_polar, key=lambda p: p[2])
+
+        self.new_flares = 0.0
+        self.next_randomize = random.uniform(0.15, 0.3)
 
         self.randomize_coefficient_targets()
         self.c0 = self.c0_t
@@ -20,10 +33,7 @@ class Bonfire(Animation):
         self.c2 = self.c2_t
         self.c3 = self.c3_t
 
-        self.new_flares = 0.0
-
     def randomize_coefficient_targets(self):
-        self.next_randomize = random.uniform(0.15, 0.3)
         self.c0_t = random.uniform(0.3, 0.6)
         self.c1_t = random.uniform(-0.2, 0.2)
         self.c2_t = random.uniform(-0.2, 0.2)

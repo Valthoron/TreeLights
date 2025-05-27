@@ -5,6 +5,8 @@ from tools import tools
 
 
 class BarberPole(Animation):
+    angle: float
+
     def initialize(self):
         self.angle = 0.0
 

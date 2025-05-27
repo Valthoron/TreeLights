@@ -1,13 +1,12 @@
-from __future__ import annotations
 import numpy as np
+import neopixel
 
 
 class Animation():
-    def __init__(self) -> Animation:
-        self.num_lamps = 0
-        self.lamps = np.array([])
-        self.lamps_polar = np.array([])
-        self.pixels = None
+    num_lamps = 0
+    lamps = np.array([])
+    lamps_polar = np.array([])
+    pixels: neopixel.NeoPixel
 
     def initialize(self):
         pass

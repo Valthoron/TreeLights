@@ -1,7 +1,6 @@
 import random
 
 import numpy as np
-import scipy as sp
 
 from animation import Animation
 from tools import tools
@@ -12,10 +11,9 @@ CURSOR_SIZE = 0.04
 
 
 class Matrix(Animation):
-    def initialize(self):
-        self.cursor_azimuth = [0.0] * NUM_CURSORS
-        self.cursor_height = [0.0] * NUM_CURSORS
-        self.cursor_position = np.tile(np.array([0.0, 0.0, 0.0]), (NUM_CURSORS, 1))
+    cursor_azimuth = [0.0] * NUM_CURSORS
+    cursor_height = [0.0] * NUM_CURSORS
+    cursor_position = np.tile(np.array([0.0, 0.0, 0.0]), (NUM_CURSORS, 1))
 
     def update(self, time: float, delta_time: float):
         for i in range(0, NUM_CURSORS):
@@ -33,7 +31,7 @@ class Matrix(Animation):
         all_distances = [np.sum(np.subtract(self.lamps, self.cursor_position[i])**2, axis=-1)**0.5 for i in range(0, NUM_CURSORS)]
         all_distances = np.min(all_distances, axis=-2)
 
-        for i, lamp in enumerate(self.lamps):
+        for i, _ in enumerate(self.lamps):
             if all_distances[i] < CURSOR_SIZE:
                 self.pixels[i] = (40, 40, 40)
             else:
