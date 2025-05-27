@@ -1,0 +1,7 @@
+# This "requirements-run.txt" file is for running animations on a Raspberry Pi.
+# For LED mapping and simulation, use "requirements-mapping.txt" instead.
+# https://learn.adafruit.com/neopixels-on-raspberry-pi/python-usage
+scipy==1.15.3
+RPi.GPIO==0.7.1
+rpi-ws281x==5.0.0
+adafruit-circuitpython-neopixel==6.3.16

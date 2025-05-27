@@ -1,24 +1,33 @@
 import numpy as np
 
 from animation import Animation
+from tools import tools
 
 
 class BarberPole(Animation):
-    def __init__(self) -> Animation:
-        super().__init__()
+    def initialize(self):
         self.angle = 0.0
 
-    def update(self, time: float, delta_time: float, lamps: np.ndarray, colors: np.ndarray):
-        self.angle += 30 * delta_time
+    def update(self, time: float, delta_time: float):
+        self.angle += np.mod(50 * delta_time, 360.0)
 
-        for i, lamp in enumerate(lamps):
-            lamp_azimuth = np.rad2deg(np.arctan2(lamp[1], lamp[0])) + self.angle + (90.0 * lamp[2])
-            lamp_mode = np.mod(lamp_azimuth, 90.0) / 90.0
-            d = 0.0 if lamp_mode < 0.5 else 1.0
-            r = 1.0
-            g = d
-            b = d
-            colors[i] = np.array([r, g, b]) * 0.7
+        for i, lamp in enumerate(self.lamps_polar):
+            azimuth = np.rad2deg(lamp[0]) + self.angle + (180.0 * lamp[2])
+            azimuth = np.mod(azimuth, 360.0)
+            frac, intg = np.modf(azimuth / 90.0)
+
+            # https://www.desmos.com/calculator/whyb9zmxxc
+            d = 1.0 - ((np.abs(frac - 0.5) - 0.1) / 0.15)
+            d = tools.saturate(d, 0.0, 1.0)
+
+            if intg == 0:
+                self.pixels[i] = (50 * d, 0, 0)
+            elif intg == 1:
+                self.pixels[i] = (0, 50 * d, 0)
+            elif intg == 2:
+                self.pixels[i] = (0, 0, 50 * d)
+            else:
+                self.pixels[i] = (30 * d, 30 * d, 0)
 
 
 def instantiate():
