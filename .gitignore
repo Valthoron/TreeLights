@@ -132,4 +132,4 @@ processed/*
 .vscode/
 .DS_Store
 
-data.csv
+*.csv

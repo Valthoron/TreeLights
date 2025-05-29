@@ -2,7 +2,10 @@ import random
 
 import numpy as np
 
+from neopixel import NeoPixel
+
 from animation import Animation
+from lamps import Lamps
 
 
 class Bonfire(Animation):
@@ -18,9 +21,9 @@ class Bonfire(Animation):
     c2_t: float
     c3_t: float
 
-    def initialize(self):
-        lamps_polar = np.copy(self.lamps_polar)
-        indices = np.reshape(np.array(range(0, self.num_lamps)), (self.num_lamps, 1))
+    def initialize(self, lamps: Lamps):
+        lamps_polar = np.copy(lamps.coords_polar)
+        indices = np.reshape(np.array(range(0, lamps.count)), (lamps.count, 1))
         lamps_polar = np.concatenate((lamps_polar, indices), axis=1)
         self.lamps_polar_sorted = sorted(lamps_polar, key=lambda p: p[2])
 
@@ -39,7 +42,7 @@ class Bonfire(Animation):
         self.c2_t = random.uniform(-0.2, 0.2)
         self.c3_t = random.uniform(-0.3, 0.3)
 
-    def update(self, time: float, delta_time: float):
+    def update(self, lamps: Lamps, pixels: NeoPixel, time: float, delta_time: float):
         # Update fire line coefficients
         self.next_randomize -= delta_time
 
@@ -63,20 +66,20 @@ class Bonfire(Animation):
                 r = 50
                 g = int(25 - (20 * (z - lamp[2])))
                 b = 5
-                self.pixels[i] = (r, g, b)
+                pixels[i] = (r, g, b)
             else:
-                pr, pg, pb = self.pixels[i]
+                pr, pg, pb = pixels[i]
                 r = int(0.6 * pr)
                 g = int(0.3 * pg)
                 b = int(0.2 * pb)
-                self.pixels[i] = (r, g, b)
+                pixels[i] = (r, g, b)
 
         # Paint flares
         nf_frac, nf_intg = np.modf(self.new_flares)
         self.new_flares = nf_frac
         for lamp in random.choices(self.lamps_polar_sorted, k=int(nf_intg)):
             i = int(lamp[3])
-            self.pixels[i] = (50, 20, 20)
+            pixels[i] = (50, 20, 20)
 
 
 def instantiate():

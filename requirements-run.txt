@@ -5,3 +5,4 @@ scipy==1.15.3
 RPi.GPIO==0.7.1
 rpi-ws281x==5.0.0
 adafruit-circuitpython-neopixel==6.3.16
+PyYAML==6.0.2

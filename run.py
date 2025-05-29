@@ -1,121 +1,56 @@
-import csv
-import importlib.util
-import os
 import random
 import sys
 import time
 
 import board
 import neopixel
-import numpy as np
+import yaml
 
-from animation import Animation
-
-
-def files_in(path):
-    for name in os.listdir(path):
-        if os.path.isfile(os.path.join(path, name)):
-            yield name
-
-
-def load_animation(name: str) -> Animation | None:
-    full_name = f"animations.{name}"
-    resolved_name = importlib.util.resolve_name(full_name, None)
-    spec = importlib.util.find_spec(resolved_name)
-
-    if spec is None:
-        return None
-
-    if spec.loader is None:
-        return None
-
-    lib = importlib.util.module_from_spec(spec)
-    sys.modules[resolved_name] = lib
-    spec.loader.exec_module(lib)
-
-    instantiate = getattr(lib, 'instantiate')
-    return instantiate()
+from animation import Animation, load_animations
+from lamps import load_lamps
 
 
 def main():
     print("Hello.")
 
+    # Read lamp coordinates
+    lamps = load_lamps("lamps.csv")
+    print(f"{lamps.count} lamp coordinates loaded.")
+
     # Initialize neopixel object
-    pixels = neopixel.NeoPixel(board.D12, 498, auto_write=False, pixel_order=neopixel.RGB)
+    pixels = neopixel.NeoPixel(board.D12, lamps.count, auto_write=False, pixel_order=neopixel.RGB)
     print("Pixels initialized.")
 
-    # Read lamp coordinates
-    data_file_name = "data.csv"
-    lamps = []
-    lamps_polar = []
-
-    with open(data_file_name, "r", newline="", encoding="utf-8") as file_handle:
-        reader = csv.reader(file_handle)
-        for row in reader:
-            x = float(row[0])
-            y = float(row[1])
-            z = float(row[2])
-            t = np.arctan2(y, x)
-            r = np.sqrt(x**2 + y**2)
-            lamps.append((x, y, z))
-            lamps_polar.append((t, r, z))
-
-    lamps = np.array(lamps)
-    lamps_polar = np.array(lamps_polar)
-    print("Lamp coordinates loaded.")
-
     # Load all animations in ./animations
-    animations: dict[str, Animation] = {}
+    animations = load_animations()
 
-    for file_name in files_in("animations"):
-        if not file_name.endswith(".py"):
-            continue
-
-        animation_name = file_name.replace(".py", "")
-
-        animation = load_animation(animation_name)
-
-        if animation is None:
-            continue
-
-        animation.num_lamps = len(lamps)
-        animation.lamps = lamps
-        animation.lamps_polar = lamps_polar
-        animation.pixels = pixels
-        animation.initialize()
-
-        animations[animation_name] = animation
-        print(f">\t{animation_name}")
+    for _, animation in animations.items():
+        animation.initialize(lamps)
 
     print(f"{len(animations.keys())} animation(s) loaded.")
 
-    # Animation loop
-    animation_list = [
-        "barberPole",
-        # "bonfire",
-        # "colorPlane",
-        "matrix",
-        # "sparkle",
-        "wanderingSphere",
-        # "shuffle"
-    ]
+    # Load configuration
+    animation_duration = 60
+    animation_list = animations.keys()
 
-    do_animation_loop = False
+    with open("run.yaml", "r", encoding="utf-8") as config_file_stream:
+        config = yaml.safe_load(config_file_stream)
+        animation_duration = config["Duration"]
 
-    # Load specified animation
-    if not len(sys.argv) > 1:
-        do_animation_loop = True
-        animation_name = ""
-        print("Running preselected animations...")
-    else:
-        animation_name = sys.argv[1]
+        loaded_animations_set = set(animations.keys())
+        config_animations_set = set(config["Animations"])
 
-        if animation_name not in animations:
-            print(f"Animation named \"{animation_name}\" not found.")
-            exit()
+        animations_set = list(config_animations_set.intersection(loaded_animations_set))
+        animations_unknown_set = config_animations_set.difference(loaded_animations_set)
 
-        animation = animations[animation_name]
-        print(f"Running animation \"{animation_name}\"...")
+        if len(animations_unknown_set) > 0:
+            print("Ignoring unknown animations in configuration:")
+            print(animations_unknown_set)
+
+        if len(animations_set) > 0:
+            animation_list = list(animations_set)
+        else:
+            print("No animations specified in configuration, playing all loaded animations.")
 
     # Animate
     animation: Animation
@@ -130,20 +65,20 @@ def main():
             t = time.time() - t_start
             dt = t - t_prev
 
-            if do_animation_loop:
-                if t > t_next_animation:
-                    t_next_animation = t + 60.0
-                    choice_set = set(animation_list).difference(set([animation_name]))
-                    animation_name = random.choice(list(choice_set))
-                    animation = animations[animation_name]
+            if t > t_next_animation:
+                # Pick a new animation that is not the current animation
+                t_next_animation = t + animation_duration
+                choice_set = set(animation_list).difference(set([animation.name]))
+                next_animation_name = random.choice(list(choice_set))
+                animation = animations[next_animation_name]
 
-            animation.update(t, dt)
+            animation.update(lamps, pixels, t, dt)
 
             pixels.show()
 
         except KeyboardInterrupt:
             print("Goodbye.")
-            exit()
+            sys.exit(0)
 
 
 if __name__ == "__main__":
