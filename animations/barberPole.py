@@ -1,7 +1,6 @@
 import numpy as np
 
 from animation import Animation
-from tools import tools
 
 
 class BarberPole(Animation):
@@ -20,7 +19,7 @@ class BarberPole(Animation):
 
             # https://www.desmos.com/calculator/whyb9zmxxc
             d = 1.0 - ((np.abs(frac - 0.5) - 0.1) / 0.15)
-            d = tools.saturate(d, 0.0, 1.0)
+            d = np.clip(d, 0.0, 1.0)
 
             if intg == 0:
                 self.pixels[i] = (50 * d, 0, 0)

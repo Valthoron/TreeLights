@@ -92,12 +92,12 @@ def main():
     # Animation loop
     animation_list = [
         "barberPole",
-        "bonfire",
-        "colorPlane",
+        # "bonfire",
+        # "colorPlane",
         "matrix",
-        "sparkle",
+        # "sparkle",
         "wanderingSphere",
-        "shuffle"
+        # "shuffle"
     ]
 
     do_animation_loop = False

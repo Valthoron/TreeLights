@@ -3,7 +3,6 @@ import random
 import numpy as np
 
 from animation import Animation
-from tools import tools
 
 NUM_CURSORS = 6
 FALL_SPEED = 0.5
@@ -22,7 +21,7 @@ class Matrix(Animation):
                 self.cursor_height[i] = random.uniform(0.5, 1.2)
 
             self.cursor_height[i] -= FALL_SPEED * delta_time
-            cursor_radius = 0.3 * tools.saturate(1.0 - self.cursor_height[i], 0.0, 1.0)
+            cursor_radius = 0.3 * np.clip(1.0 - self.cursor_height[i], 0.0, 1.0)
 
             self.cursor_position[i][0] = cursor_radius * np.cos(self.cursor_azimuth[i])
             self.cursor_position[i][1] = cursor_radius * np.sin(self.cursor_azimuth[i])
