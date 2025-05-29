@@ -1,6 +1,7 @@
-Duration: 60
-Animations:
-  - barberPole
+Pin: D12
+PixelOrder: RGB
+AnimationDuration: 60
+Playlist:
   - bonfire
   - colorPlane
   - matrix

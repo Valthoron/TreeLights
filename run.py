@@ -4,21 +4,25 @@ import time
 
 import board
 import neopixel
-import yaml
 
 from animation import Animation, load_animations
 from lamps import load_lamps
+from configuration import load_configuration
 
 
 def main():
     print("Hello.")
+
+    # Load configuration
+    configuration = load_configuration("run.yaml")
 
     # Read lamp coordinates
     lamps = load_lamps("lamps.csv")
     print(f"{lamps.count} lamp coordinates loaded.")
 
     # Initialize neopixel object
-    pixels = neopixel.NeoPixel(board.D12, lamps.count, auto_write=False, pixel_order=neopixel.RGB)
+    pin = getattr(board, configuration.pin)
+    pixels = neopixel.NeoPixel(pin, lamps.count, auto_write=False, pixel_order=configuration.pixel_order)
     print("Pixels initialized.")
 
     # Load all animations in ./animations
@@ -29,28 +33,21 @@ def main():
 
     print(f"{len(animations.keys())} animation(s) loaded.")
 
-    # Load configuration
-    animation_duration = 60
-    animation_list = animations.keys()
+    # Prepare playlist
+    playlist = set(animations.keys())
 
-    with open("run.yaml", "r", encoding="utf-8") as config_file_stream:
-        config = yaml.safe_load(config_file_stream)
-        animation_duration = config["Duration"]
+    # Reject non-existing animations in the configuration
+    unknown_animations = configuration.playlist.difference(playlist)
 
-        loaded_animations_set = set(animations.keys())
-        config_animations_set = set(config["Animations"])
+    if len(unknown_animations) > 0:
+        print("Ignoring unknown animations in configuration:")
+        for u in unknown_animations:
+            print(f"x  {u}")
 
-        animations_set = list(config_animations_set.intersection(loaded_animations_set))
-        animations_unknown_set = config_animations_set.difference(loaded_animations_set)
-
-        if len(animations_unknown_set) > 0:
-            print("Ignoring unknown animations in configuration:")
-            print(animations_unknown_set)
-
-        if len(animations_set) > 0:
-            animation_list = list(animations_set)
-        else:
-            print("No animations specified in configuration, playing all loaded animations.")
+    if len(unknown_animations) == len(configuration.playlist):
+        print("No animations specified in configuration, playing all loaded animations.")
+    else:
+        playlist = playlist.intersection(configuration.playlist)
 
     # Animate
     animation: Animation
@@ -67,8 +64,8 @@ def main():
 
             if t > t_next_animation:
                 # Pick a new animation that is not the current animation
-                t_next_animation = t + animation_duration
-                choice_set = set(animation_list).difference(set([animation.name]))
+                t_next_animation = t + configuration.animation_duration
+                choice_set = playlist.difference(set([animation.name]))
                 next_animation_name = random.choice(list(choice_set))
                 animation = animations[next_animation_name]
 
