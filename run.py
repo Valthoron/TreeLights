@@ -3,11 +3,12 @@ import sys
 import time
 
 import board
-import neopixel
+
+from neopixel import NeoPixel
 
 from animation import Animation, load_animations
-from lamps import load_lamps
 from configuration import load_configuration
+from lamps import load_lamps
 
 
 def main():
@@ -21,8 +22,8 @@ def main():
     print(f"{lamps.count} lamp coordinates loaded.")
 
     # Initialize neopixel object
-    pin = getattr(board, configuration.pin)
-    pixels = neopixel.NeoPixel(pin, lamps.count, auto_write=False, pixel_order=configuration.pixel_order)
+    pin = getattr(board, configuration["Pin"])
+    pixels = NeoPixel(pin, lamps.count, auto_write=False, pixel_order=configuration["PixelOrder"])
     print("Pixels initialized.")
 
     # Load all animations in ./animations
@@ -34,20 +35,22 @@ def main():
     print(f"{len(animations.keys())} animation(s) loaded.")
 
     # Prepare playlist
-    playlist = set(animations.keys())
+    animation_set = set(animations.keys())
 
     # Reject non-existing animations in the configuration
-    unknown_animations = configuration.playlist.difference(playlist)
+    playlist = set(configuration["Playlist"])
+    unknown_animations = playlist.difference(animation_set)
 
     if len(unknown_animations) > 0:
         print("Ignoring unknown animations in configuration:")
         for u in unknown_animations:
             print(f"x  {u}")
 
-    if len(unknown_animations) == len(configuration.playlist):
+    if len(unknown_animations) == len(playlist):
         print("No animations specified in configuration, playing all loaded animations.")
+        playlist = animation_set
     else:
-        playlist = playlist.intersection(configuration.playlist)
+        playlist = animation_set.intersection(playlist)
 
     # Animate
     animation: Animation
@@ -64,7 +67,7 @@ def main():
 
             if t > t_next_animation:
                 # Pick a new animation that is not the current animation
-                t_next_animation = t + configuration.animation_duration
+                t_next_animation = t + configuration["AnimationDuration"]
                 choice_set = playlist.difference(set([animation.name]))
                 next_animation_name = random.choice(list(choice_set))
                 animation = animations[next_animation_name]

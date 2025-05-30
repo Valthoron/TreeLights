@@ -1,0 +1,8 @@
+Pin: D12
+PixelOrder: RGB
+LampCount: 498
+LampDriverIp: 127.0.0.1
+LampDriverPort: 2593
+CameraIp: 127.0.0.1
+CameraPort: 2594
+CameraIndex: 0
