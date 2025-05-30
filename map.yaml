@@ -1,10 +1,14 @@
-Pin: D12
-PixelOrder: RGB
-LampCount: 498
-LampDriverIp: 127.0.0.1
-LampDriverPort: 2593
-CameraIp: 127.0.0.1
-CameraPort: 2594
-CameraIndex: 0
-CameraWidth: 4096
-CameraHeight: 2160
+NeoPixel:
+  Pin: D12
+  PixelOrder: RGB
+  LampCount: 498
+LampDriver:
+  Ip: 127.0.0.1
+  Port: 2593
+  Sleep: 0.05
+Camera:
+  Ip: 127.0.0.1
+  Port: 2594
+  Index: 0
+  Width: 4096
+  Height: 2160

@@ -1,10 +1,12 @@
-Pin: D12
-PixelOrder: RGB
-AnimationDuration: 60
-Playlist:
-  - bonfire
-  - colorPlane
-  - matrix
-  - sparkle
-  - wanderingSphere
-  - shuffle
+NeoPixel:
+  Pin: D12
+  PixelOrder: RGB
+Animations:
+  Duration: 60
+  Playlist:
+    - bonfire
+    - colorPlane
+    - matrix
+    - sparkle
+    - wanderingSphere
+    - shuffle

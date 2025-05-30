@@ -30,20 +30,20 @@ def main():
 
     # Create and bind socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(("0.0.0.0", configuration["CameraPort"]))
+    sock.bind(("0.0.0.0", configuration["Camera"]["Port"]))
     sock.settimeout(1.0)
     print("Socket open and bound.")
 
     # Initialize camera
-    camera = cv2.VideoCapture(configuration["CameraIndex"])
+    camera = cv2.VideoCapture(configuration["Camera"]["Index"])
     time.sleep(0.5)  # Need this, or else we get a black image
     _ = camera.read()
     time.sleep(0.25)
 
-    if not camera.set(cv2.CAP_PROP_FRAME_WIDTH, configuration["CameraWidth"]):
+    if not camera.set(cv2.CAP_PROP_FRAME_WIDTH, configuration["Camera"]["Width"]):
         print("Warning: Could not set camera frame width.")
 
-    if not camera.set(cv2.CAP_PROP_FRAME_HEIGHT, configuration["CameraHeight"]):
+    if not camera.set(cv2.CAP_PROP_FRAME_HEIGHT, configuration["Camera"]["Height"]):
         print("Warning: Could not set camera frame height.")
 
     if not camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25):
@@ -57,35 +57,42 @@ def main():
 
     # Start
     print("Capturing...")
-    driver_address = (configuration["LampDriverIp"], configuration["LampDriverPort"])
+    driver_address = (configuration["LampDriver"]["Ip"], configuration["LampDriver"]["Port"])
 
-    for i in range(0, configuration["LampCount"]):
-        lamp_message = bytes([(i & 0xff), ((i >> 8) & 0xff)])
+    try:
+        for i in range(0, configuration["NeoPixel"]["LampCount"]):
+            # 2-byte index good up to 65535 lamps
+            lamp_message = bytes([(i & 0xff), ((i >> 8) & 0xff)])
 
-        ok = 0
-        while ok == 0:
-            try:
-                sock.sendto(lamp_message, driver_address)
-                sock.recvfrom(1)
-                ok = 1
-            except TimeoutError:
-                pass
+            # Keep signaling the lamp driver until acknowledged
+            ack_received = 0
+            while ack_received == 0:
+                try:
+                    sock.sendto(lamp_message, driver_address)
+                    sock.recvfrom(1)
+                    ack_received = 1
+                except TimeoutError:
+                    pass
 
-        _, image = camera.read()
-        file_name = f"capture/lamp_{i}_angle_{angle}.jpg"
-        cv2.imwrite(file_name, image)
+            # Lamp lit, good to capture
+            _, image = camera.read()
+            file_name = f"capture/lamp_{i}_angle_{angle}.jpg"
+            cv2.imwrite(file_name, image)
 
-        if i == 0:
-            # Verify image size
-            image_height, image_width, _ = image.shape
+            if i == 0:
+                # Verify image size
+                image_height, image_width, _ = image.shape
 
-            if (image_width != configuration["CameraWidth"]) or (image_height != configuration["CameraHeight"]):
-                print(f"Warning: Captured image size ({image_width} x {image_height}) is not equal to")
-                print(f"  configured CameraWidth x CameraHeight ({configuration['CameraWidth']} x {configuration['CameraHeight']}).")
-                print("  Make sure to use the actual image size when processing.")
+                if (image_width != configuration["Camera"]["Width"]) or (image_height != configuration["Camera"]["Height"]):
+                    print(f"Warning: Captured image size ({image_width} x {image_height}) is not equal to configured camera width x height ({configuration['Camera']['Width']} x {configuration['Camera']['Height']}).")
+                    print("  Make sure to use the actual image size when processing.")
+
+        print("Finished.")
+    except KeyboardInterrupt:
+        print("Aborted.")
 
     camera.release()
-    print("Finished.")
+    print("Camera released.")
 
 
 if __name__ == "__main__":

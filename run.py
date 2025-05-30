@@ -22,8 +22,8 @@ def main():
     print(f"{lamps.count} lamp coordinates loaded.")
 
     # Initialize neopixel object
-    pin = getattr(board, configuration["Pin"])
-    pixels = NeoPixel(pin, lamps.count, auto_write=False, pixel_order=configuration["PixelOrder"])
+    pin = getattr(board, configuration["NeoPixel"]["Pin"])
+    pixels = NeoPixel(pin, lamps.count, auto_write=False, pixel_order=configuration["NeoPixel"]["PixelOrder"])
     print("Pixels initialized.")
 
     # Load all animations in ./animations
@@ -38,7 +38,7 @@ def main():
     animation_set = set(animations.keys())
 
     # Reject non-existing animations in the configuration
-    playlist = set(configuration["Playlist"])
+    playlist = set(configuration["Animations"]["Playlist"])
     unknown_animations = playlist.difference(animation_set)
 
     if len(unknown_animations) > 0:
@@ -67,7 +67,7 @@ def main():
 
             if t > t_next_animation:
                 # Pick a new animation that is not the current animation
-                t_next_animation = t + configuration["AnimationDuration"]
+                t_next_animation = t + configuration["Animations"]["Duration"]
                 choice_set = playlist.difference(set([animation.name]))
                 next_animation_name = random.choice(list(choice_set))
                 animation = animations[next_animation_name]
