@@ -41,8 +41,9 @@ def main():
             pixels[i] = [100, 100, 100]
             pixels.show()
 
-            time.sleep(0.05)  # 100 ms
-            # 174-175
+            # Maybe NeoPixel isn't done sending, previous lamp is still illuminated, or this one isn't at full brightness yet
+            # 50 ms delay for good measure, tweak to taste
+            time.sleep(0.05)
 
             sock.sendto(ack_message, camera_address)
 

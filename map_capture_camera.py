@@ -39,10 +39,19 @@ def main():
     time.sleep(0.5)  # Need this, or else we get a black image
     _ = camera.read()
     time.sleep(0.25)
-    # camera.set(cv2.CAP_PROP_FRAME_WIDTH, 4096)
-    # camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
-    camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
-    camera.set(cv2.CAP_PROP_EXPOSURE, 0.0)
+
+    if not camera.set(cv2.CAP_PROP_FRAME_WIDTH, configuration["CameraWidth"]):
+        print("Warning: Could not set camera frame width.")
+
+    if not camera.set(cv2.CAP_PROP_FRAME_HEIGHT, configuration["CameraHeight"]):
+        print("Warning: Could not set camera frame height.")
+
+    if not camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25):
+        print("Warning: Could not disable camera auto exposure.")
+
+    if not camera.set(cv2.CAP_PROP_EXPOSURE, 0.0):
+        print("Warning: Could not set camera exposure.")
+
     time.sleep(0.25)
     print("Camera open.")
 
@@ -54,7 +63,7 @@ def main():
         lamp_message = bytes([(i & 0xff), ((i >> 8) & 0xff)])
 
         ok = 0
-        while (ok == 0):
+        while ok == 0:
             try:
                 sock.sendto(lamp_message, driver_address)
                 sock.recvfrom(1)
@@ -63,8 +72,17 @@ def main():
                 pass
 
         _, image = camera.read()
-        file_name = f"capture/{i}_{angle}.jpg"
+        file_name = f"capture/lamp_{i}_angle_{angle}.jpg"
         cv2.imwrite(file_name, image)
+
+        if i == 0:
+            # Verify image size
+            image_height, image_width, _ = image.shape
+
+            if (image_width != configuration["CameraWidth"]) or (image_height != configuration["CameraHeight"]):
+                print(f"Warning: Captured image size ({image_width} x {image_height}) is not equal to")
+                print(f"  configured CameraWidth x CameraHeight ({configuration['CameraWidth']} x {configuration['CameraHeight']}).")
+                print("  Make sure to use the actual image size when processing.")
 
     camera.release()
     print("Finished.")

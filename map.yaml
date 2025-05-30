@@ -6,3 +6,5 @@ LampDriverPort: 2593
 CameraIp: 127.0.0.1
 CameraPort: 2594
 CameraIndex: 0
+CameraWidth: 4096
+CameraHeight: 2160
